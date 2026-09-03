@@ -1,0 +1,1157 @@
+<!--
+  Copyright (c) 2026 clavebit.com
+  Licensed under the MIT License.
+  Open Source: https://github.com
+  EL SOFTWARE SE PROPORCIONA "TAL CUAL", SIN GARANTÍA DE NINGÚN TIPO.
+-->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <title>Generador de Billetera HD BIP39 / BIP84</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'none'; object-src 'none'; img-src 'self' data:;">
+    <meta name="description" content="Generador de frase semilla BIP39 y derivación HD BIP84 a partir de entropía">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="./favicon.ico" type="image/x-icon">
+
+<style>
+    .crypto-generator-container {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        max-width: 1000px;
+        margin: 20px auto;
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        padding: 24px;
+        box-sizing: border-box;
+        color: #1e293b;
+    }
+
+    .header-proyecto {
+        margin-bottom: 25px;
+        border-bottom: 1px solid #e2e8f0;
+        padding-bottom: 20px;
+    }
+
+    .main-titulo {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0 0 8px 0;
+    }
+
+    .main-descripcion {
+        font-size: 1rem;
+        color: #64748b;
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    .grid-botones {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .grid-botones button {
+        border: none;
+        padding: 12px 10px;
+        cursor: pointer;
+        border-radius: 8px;
+        font-weight: bold;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        min-height: 50px;
+    }
+
+    .grid-botones button:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        filter: brightness(1.05);
+    }
+
+    .grid-botones button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .header-derivar {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+        background: #f8fafc;
+        padding: 12px 16px;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        margin-top: 0;
+    }
+
+    .header-derivar label {
+        font-weight: 600;
+        color: #0f172a;
+        font-size: 0.9rem;
+        white-space: nowrap;
+    }
+
+    .header-derivar input {
+        flex: 1;
+        min-width: 160px;
+        padding: 10px 14px;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-family: inherit;
+        transition: border-color 0.2s;
+        background: white;
+    }
+
+    .header-derivar input:focus {
+        outline: none;
+        border-color: #a855f7;
+    }
+
+    .header-derivar .btn-derivar,
+    .header-derivar .btn-derivar-clave,
+    .header-derivar .btn-derivar-direcciones {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-weight: bold;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+    }
+
+    .header-derivar .btn-derivar { background: #a855f7; color: white; }
+    .header-derivar .btn-derivar:hover { background: #9333ea; transform: scale(1.02); }
+
+    .header-derivar .btn-derivar-clave { background: #10b981; color: white; }
+    .header-derivar .btn-derivar-clave:hover { background: #059669; transform: scale(1.02); }
+
+    .header-derivar .btn-derivar-direcciones { background: #38bdf8; color: #0f172a; }
+    .header-derivar .btn-derivar-direcciones:hover { background: #0284c7; color: white; transform: scale(1.02); }
+
+    .header-derivar button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .paso-seccion {
+        margin-bottom: 24px;
+        padding: 16px 16px 16px 20px;
+        border-radius: 0 12px 12px 0;
+        background: #f8fafc;
+        transition: all 0.3s ease;
+        border-left: 4px solid #94a3b8;
+    }
+
+    .paso-tag {
+        font-size: 0.75rem;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+        display: inline-block;
+        margin-bottom: 4px;
+        color: #475569;
+    }
+
+    .paso-titulo {
+        margin: 0 0 8px 0;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .paso-descripcion {
+        margin: 0 0 12px 0;
+        font-size: 0.85rem;
+        line-height: 1.5;
+        color: #475569;
+    }
+
+    .terminal-box {
+        background: #0f172a;
+        padding: 14px;
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        font-size: 0.85rem;
+        line-height: 1.6;
+        word-break: break-all;
+        white-space: pre-wrap;
+        min-height: 24px;
+        border-radius: 8px;
+        border: 1px solid #1e293b;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        color: #e2e8f0;
+    }
+
+    .palabra-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 8px;
+        margin-top: 12px;
+    }
+
+    .palabra-item {
+        background: #1e293b;
+        padding: 8px 6px;
+        border-radius: 4px;
+        text-align: center;
+        font-size: 0.8rem;
+        border: 1px solid #334155;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+    }
+
+    .palabra-item .idx { color: #64748b; font-size: 0.65rem; }
+    .palabra-item .word { color: #38bdf8; font-weight: bold; font-size: 1rem; }
+    .palabra-item .bip-index {
+        color: #fbbf24;
+        font-size: 0.7rem;
+        font-weight: bold;
+        background: #2d3748;
+        border-radius: 12px;
+        padding: 1px 10px;
+        display: inline-block;
+        margin-top: 2px;
+        border: 1px solid #fbbf2444;
+    }
+
+    .p1 { border-left-color: #f7931a; } .p1 .paso-tag { color: #f7931a; }
+    .p2 { border-left-color: #2563eb; } .p2 .paso-tag { color: #2563eb; }
+    .p3 { border-left-color: #10b981; } .p3 .paso-tag { color: #10b981; }
+    .p4 { border-left-color: #a855f7; } .p4 .paso-tag { color: #a855f7; }
+    .p5 { border-left-color: #10b981; } .p5 .paso-tag { color: #10b981; }
+
+    .hex-entropy { color: #fbbf24; font-weight: bold; word-break: break-all; }
+    .bits-label { color: #94a3b8; font-size: 0.75rem; }
+
+    .frase-final-container {
+        margin-top: 20px;
+        padding: 20px;
+        background: #f1f5f9;
+        border-radius: 12px;
+        border: 2px solid #e2e8f0;
+        display: none;
+    }
+
+    .frase-final-container h3 { margin: 0 0 15px 0; color: #0f172a; font-size: 1.2rem; text-align: center; }
+
+    .frase-completa {
+        padding: 20px 24px;
+        background: #0f172a;
+        border-radius: 8px;
+        color: #38bdf8;
+        font-family: 'SFMono-Regular', Consolas, monospace;
+        font-size: 1.15rem;
+        font-weight: bold;
+        border: 2px solid #f7931a;
+        text-align: center;
+        word-break: normal;
+        white-space: normal;
+        overflow-wrap: break-word;
+        line-height: 1.8;
+        letter-spacing: 0.5px;
+    }
+
+    .btn-copiar {
+        margin-top: 14px;
+        padding: 10px 28px;
+        background: #f7931a;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-weight: bold;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .btn-copiar:hover { background: #e6850f; transform: scale(1.02); }
+
+    .seed-section-inline {
+        margin-top: 16px;
+        padding: 20px;
+        background: #f1f5f9;
+        border-radius: 10px;
+        border: 2px solid #a855f7;
+        display: none;
+    }
+
+    .seed-result {
+        background: #0f172a;
+        padding: 20px;
+        border-radius: 8px;
+        font-family: 'SFMono-Regular', Consolas, monospace;
+        font-size: 1.1rem;
+        word-break: break-all;
+        color: #e2e8f0;
+        border: 1px solid #1e293b;
+    }
+
+    .seed-result .seed-label { color: #94a3b8; font-weight: normal; font-size: 1rem; }
+    .seed-result .seed-hex { color: #a855f7; font-weight: bold; font-size: 1.1rem; line-height: 1.8; letter-spacing: 0.5px; }
+    .seed-result .seed-info-text { color: #64748b; font-size: 0.75rem; margin-top: 8px; }
+
+    .btn-copiar-seed {
+        margin-top: 12px;
+        padding: 10px 28px;
+        background: #a855f7;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-weight: bold;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .btn-copiar-seed:hover { background: #9333ea; transform: scale(1.02); }
+
+    .seed-loading-small, .loading-small {
+        color: #a855f7;
+        font-weight: bold;
+        font-size: 0.85rem;
+        display: none;
+    }
+
+    .paso-botones {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+    }
+
+    .paso-botones button {
+        padding: 10px 24px;
+        border: none;
+        border-radius: 8px;
+        font-weight: bold;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .paso-botones button:hover:not(:disabled) { transform: scale(1.02); filter: brightness(1.05); }
+    .paso-botones button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .paso-botones .btn-paso-seed { background: #a855f7; color: white; }
+    .paso-botones .btn-paso-clave { background: #10b981; color: white; }
+
+    .pasos-independientes {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 2px dashed #e2e8f0;
+    }
+
+    .pasos-independientes .paso-seccion { background: #fafbfc; }
+
+    .clave-maestra-section {
+        margin-top: 16px;
+        padding: 20px;
+        background: #f1f5f9;
+        border-radius: 10px;
+        border: 2px solid #10b981;
+        display: none;
+    }
+
+    .clave-maestra-section h4 { margin: 0 0 12px 0; color: #0f172a; font-size: 1.2rem; text-align: center; }
+
+    .clave-maestra-section .step-box {
+        background: white;
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin: 8px 0;
+        border: 1px solid #e2e8f0;
+    }
+
+    .clave-maestra-section .step-box .step-title { font-weight: 700; color: #10b981; font-size: 0.85rem; }
+
+    .clave-maestra-section .step-box .step-content {
+        font-family: 'SFMono-Regular', Consolas, monospace;
+        font-size: 0.75rem;
+        color: #1e293b;
+        word-break: break-all;
+        margin-top: 4px;
+        background: #f8fafc;
+        padding: 8px 10px;
+        border-radius: 4px;
+    }
+
+    .clave-formatos {
+        margin-top: 12px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .clave-formatos .formato-box {
+        background: white;
+        padding: 12px 14px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .clave-formatos .formato-box .formato-label { font-weight: 700; font-size: 0.8rem; display: block; margin-bottom: 4px; }
+    .clave-formatos .formato-box .formato-label.zprv-label { color: #a855f7; }
+    .clave-formatos .formato-box .formato-label.zpub-label { color: #10b981; }
+
+    .clave-formatos .formato-box .formato-valor {
+        font-family: 'SFMono-Regular', Consolas, monospace;
+        font-size: 0.7rem;
+        word-break: break-all;
+        background: #f8fafc;
+        padding: 6px 8px;
+        border-radius: 4px;
+        color: #1e293b;
+        line-height: 1.6;
+    }
+
+    .btn-copiar-formatos {
+        margin-top: 8px;
+        padding: 6px 16px;
+        border: none;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-block;
+    }
+
+    .btn-copiar-formatos.copiar-zprv { background: #a855f7; color: white; }
+    .btn-copiar-formatos.copiar-zpub { background: #10b981; color: white; }
+
+    .tabla-direcciones table td {
+        word-break: break-all;
+        font-family: 'SFMono-Regular', Consolas, monospace;
+    }
+</style>
+</head>
+<body>
+
+<div class="crypto-generator-container">
+    <div class="header-proyecto">
+	      <p class="main-descripcion" style="color: #f7931a;">>> <a href="https://clavebit.com" rel="noopener" style="text-decoration: none;color: orange;">Clave privada, pública y dirección</a></p>
+  
+
+
+        <h1 class="main-titulo">Generador de Billetera HD (BIP39/BIP84)</h1>
+        <p class="main-descripcion">Genera una frase mnemotécnica de 24 palabras, su semilla (seed PBKDF2) con passphrase opcional, sus claves privada y pública extendidas, y direcciones SegWit nativas.</p>
+    </div>
+
+    <div class="grid-botones">
+        <button onclick="generarFraseCompleta()" style="background: #f7931a; color: white;">
+            🔑 Generar Frase Semilla
+        </button>
+    </div>
+
+    <!-- HEADER CON BOTONES DE DERIVACIÓN E INPUT DE PASSPHRASE -->
+    <div class="header-derivar">
+        <label for="passphrase-input">🔐 Passphrase:</label>
+        <input type="text" id="passphrase-input" placeholder="Opcional (dejar vacío)" />
+        <button class="btn-derivar" id="btn-derivar-seed" onclick="derivarSeedDesdeFrase()">🚀 Derivar Seed</button>
+        <button class="btn-derivar-clave" id="btn-derivar-clave" onclick="derivarClaveMaestra()">🔑 Derivar Clave Maestra (zprv/zpub)</button>
+        <button class="btn-derivar-direcciones" id="btn-derivar-direcciones-header" onclick="generar200Direcciones()">⚡ Derivar Direcciones (100+100)</button>
+        
+        <span id="seed-loading-header" class="seed-loading-small">⏳ Derivando...</span>
+        <span id="clave-loading-header" class="loading-small">⏳ Procesando...</span>
+        <span id="dir-loading-header" class="loading-small" style="color: #38bdf8;">⏳ Generando...</span>
+    </div>
+
+    <!-- PASO 1: ENTROPÍA -->
+    <div class="paso-seccion p1">
+        <span class="paso-tag">PASO 1: ENTROPÍA</span>
+        <h4 class="paso-titulo">256 bits aleatorios (32 bytes)</h4>
+        <p class="paso-descripcion">Se genera la entropía criptográficamente segura. Se muestra en binario y en hexadecimal.</p>
+        <div id="wp-entropia" class="terminal-box">Entropía binaria y hexadecimal...</div>
+    </div>
+
+    <!-- PASO 2: CHECKSUM -->
+    <div class="paso-seccion p2">
+        <span class="paso-tag">PASO 2: CHECKSUM</span>
+        <h4 class="paso-titulo">Verificación SHA-256</h4>
+        <p class="paso-descripcion">Se calcula el checksum de 8 bits tomando los primeros 8 bits del hash SHA-256 de la entropía.</p>
+        <div id="wp-checksum" class="terminal-box">Checksum...</div>
+    </div>
+
+    <!-- PASO 3: FRASE SEMILLA -->
+    <div class="paso-seccion p3">
+        <span class="paso-tag">PASO 3: FRASE SEMILLA</span>
+        <h4 class="paso-titulo">Mapeo a 24 palabras</h4>
+        <p class="paso-descripcion">Mapeo de 264 bits (256 bits + 8 bits checksum) a 24 palabras BIP39.</p>
+        <div id="wp-palabras" class="terminal-box">Frase semilla...</div>
+
+        <div id="frase-final-container" class="frase-final-container">
+            <h3>📝 Frase Semilla (24 palabras)</h3>
+            <div id="frase-completa" class="frase-completa"></div>
+            <button class="btn-copiar" onclick="copiarFrase()">📋 Copiar frase completa</button>
+        </div>
+    </div>
+
+    <div class="pasos-independientes">
+        <!-- PASO 4: DERIVAR SEED -->
+        <div class="paso-seccion p4">
+            <span class="paso-tag">PASO 4: DERIVAR SEED</span>
+            <h4 class="paso-titulo">Seed maestra (PBKDF2)</h4>
+            <p class="paso-descripcion">El salt se compone de la palabra constante "mnemonic" seguida de la passphrase opcional (por ejemplo: "mnemonicejemplo").</p>
+            <p class="paso-descripcion">Se aplica la función pseudorandom PBKDF2 utilizando HMAC-SHA512 sobre la frase semilla normalizada en Unicode (NFKD) y el salt durante exactamente 2048 iteraciones para derivar la Seed maestra de 64 bytes.</p>
+
+            <div class="paso-botones">
+                <button class="btn-paso-seed" onclick="derivarSeedDesdeFrase()">🚀 Derivar Seed</button>
+            </div>
+            <div id="seed-section-inline" class="seed-section-inline">
+                <div class="seed-result" id="seed-result">
+                    <div><span class="seed-label">🧬 Seed (64 bytes):</span></div>
+                    <div><span class="seed-hex" id="seed-hex-display">-</span></div>
+                    <div class="seed-info-text" id="seed-info">PBKDF2(HMAC-SHA512, 2048 iteraciones)</div>
+                </div>
+                <button class="btn-copiar-seed" onclick="copiarSeed()">📋 Copiar seed (hex)</button>
+            </div>
+        </div>
+
+        <!-- PASO 5: CLAVE MAESTRA BIP84 -->
+        <div class="paso-seccion p5">
+            <span class="paso-tag">PASO 5: CLAVE MAESTRA BIP84</span>
+            <h4 class="paso-titulo">Clave de Cuenta SegWit Nativo (zprv / zpub) en m / 84' / 0' / 0'</h4>
+            <p class="paso-descripcion">I = HMAC-SHA512("Bitcoin Seed", Seed) esto nos da 64 bytes de los cuales los 32 bytes primeros actúan como la clave privada maestra y los 32 bytes siguientes como el código de cadena maestro necesario para derivar claves hijas.</p>
+            <p class="paso-descripcion">Deriva claves extendidas para direcciones nativas SegWit BIP84 (<code>bc1q...</code>).</p>
+
+            <div class="paso-botones">
+                <button class="btn-paso-clave" id="btn-paso-clave" onclick="derivarClaveMaestra()">🔑 Derivar Clave de Cuenta (m/84'/0'/0')</button>
+            </div>
+            <br>
+            <p class="paso-descripcion">m = clave maestra privada, 84 se refiere a BIP84, 0' es la moneda Bitcoin, 0' es el número de cuenta pues permite tener varias, 0 direcciones para recibir BTC externas o 1 direcciones internas de cambio, número de dirección concreta (0, 1, 2, 3...)</p>
+            <p class="paso-descripcion">El apóstrofe (') indica derivación endurecida (hardened), la cual añade un offset de 2^31 (0x80000000) al índice. Esto evita que si se compromete una clave privada hija, se pueda deducir la clave privada madre a partir de una clave pública extendida.</p>
+            <p class="paso-descripcion">Para derivar en modo endurecido (por ejemplo, pasar de m a m/84'), se calcula I = HMAC-SHA512("código de cadena padre", 0x00 || clave privada padre || índice endurecido (i + 0x80000000) en 4 bytes en formato Big-Endian). Los primeros 32 bytes de I se suman (módulo n) a la clave privada padre para obtener la clave privada hija, mientras que los últimos 32 bytes corresponden al nuevo código de cadena hijo. Este proceso se repite sucesivamente para derivar la ruta m/84'/0'/0'.</p>
+            <p class="paso-descripcion">Para construir las claves extendidas de 78 bytes (zprv y zpub) en el nivel m/84'/0'/0', se concatenan: 4 bytes de prefijo de versión (0x04B2430C para zprv, 0x04B24746 para zpub), 1 byte de profundidad (0x03), 4 bytes del fingerprint (primeros 4 bytes del HASH160 de la clave pública comprimida del padre m/84'/0'), 4 bytes con el número de hijo endurecido (0x80000000), 32 bytes del código de cadena y 33 bytes para la clave (para zprv: 0x00 + Clave Privada de 32 bytes; para zpub: Clave Pública Comprimida de 33 bytes).</p>
+            <p class="paso-descripcion">Para calcular zpriv y zpub (convertimos de privada a pública usando la geometría de la curva elíptica <a href="https://clavebit.com" rel="noopener" style="text-decoration: none; color: red;">ver</a>) se estructuran estos 78 bytes se hace un checksum y se codifica todo en base 58.</p>
+
+            <div id="clave-maestra-section" class="clave-maestra-section">
+                <h4>🔑 Clave de Cuenta BIP84 (SegWit Nativo)</h4>
+                <div class="step-box">
+                    <div class="step-title">PASO 1: Derivación BIP32 m / 84' / 0' / 0'</div>
+                    <div class="step-content">
+                        <div><span style="color:#38bdf8;">Ruta</span> = <span style="color:#f7931a;">m / 84' / 0' / 0'</span></div>
+                        <div style="margin-top:6px;">
+                            <span>Clave Privada (32 bytes):</span> 
+                            <span id="xprv-private-key" style="color:#a855f7;">-</span>
+                        </div>
+                        <div style="margin-top:6px;">
+                            <span>Código de Cadena (32 bytes):</span> 
+                            <span id="xprv-chain-code" style="color:#38bdf8;">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <div class="step-title">PASO 2: Claves extendidas BIP84</div>
+                    <div class="step-content" style="padding: 0; background: transparent;">
+                        <div class="clave-formatos">
+                            <div class="formato-box">
+                                <span class="formato-label zprv-label">🔑 zprv (BIP84)</span>
+                                <div class="formato-valor" id="zprv-result">-</div>
+                                <button class="btn-copiar-formatos copiar-zprv" onclick="copiarTexto('zprvGenerada', 'zprv')">📋 Copiar</button>
+                            </div>
+                            <div class="formato-box">
+                                <span class="formato-label zpub-label">🔓 zpub (BIP84)</span>
+                                <div class="formato-valor" id="zpub-result">-</div>
+                                <button class="btn-copiar-formatos copiar-zpub" onclick="copiarTexto('zpubGenerada', 'zpub')">📋 Copiar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PASO 6: GENERACIÓN DE DIRECCIONES DE RECEPCIÓN Y CAMBIO -->
+        <div class="paso-seccion p5" style="border-left-color: #38bdf8;">
+            <span class="paso-tag" style="color: #38bdf8;">PASO 6: DIRECCIONES Y CLAVES (BIP84)</span>
+            <h4 class="paso-titulo">100 Direcciones de Recepción y 100 de Cambio</h4>
+            <p class="paso-descripcion">
+                Deriva direcciones SegWit Nativa (<strong>bc1q...</strong>) desde la clave de cuenta.<br>
+                Ruta Recepción: <code>m / 84' / 0' / 0' / 0 / i</code> | Ruta Cambio: <code>m / 84' / 0' / 0' / 1 / i</code>
+            </p>
+            <p class="paso-descripcion">Para los niveles no endurecidos (por ejemplo, pasar de m/84'/0'/0' a m/84'/0'/0'/0), se calcula I = HMAC-SHA512("código de cadena padre", clave pública comprimida padre || índice en 4 bytes). Esto es fundamental porque permite a las billeteras de solo lectura (watch-only) derivar infinitas direcciones públicas hijas usando únicamente la Clave Pública Extendida (zpub), sin llegar a exponer o tocar jamás las claves privadas.</p>
+            <p class="paso-descripcion">Repetimos el proceso y pasamos de m/84'/0'/0'/0 a m/84'/0'/0'/0/0 y aquí tendríamos una clave privada hija con su clave pública asociada y dirección bc1q correspondiente (<a href="https://clavebit.com" style="text-decoration: none; color: red;" rel="noopener">ver</a>).</p>
+
+            <div class="paso-botones">
+                <button class="btn-paso-clave" id="btn-derivar-direcciones-paso" style="background: #38bdf8; color: #0f172a;" onclick="generar200Direcciones()">
+                    ⚡ Generar 100 Recepción + 100 Cambio
+                </button>
+                <span id="dir-loading" class="loading-small" style="color: #38bdf8;">⏳ Generando 200 direcciones...</span>
+            </div>
+
+            <div id="direcciones-section" style="display:none; margin-top: 20px;">
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <button onclick="mostrarTab('recepcion')" id="tab-rec-btn" style="padding: 8px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; border: none; background: #38bdf8; color: #0f172a;">📥 Recepción (100)</button>
+                    <button onclick="mostrarTab('cambio')" id="tab-cam-btn" style="padding: 8px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; border: none; background: #e2e8f0; color: #0f172a;">🔄 Cambio (100)</button>
+                </div>
+
+                <div id="tabla-recepcion-container" class="terminal-box tabla-direcciones" style="max-height: 400px; overflow-y: auto;">
+                    <table style="width:100%; border-collapse: collapse; font-size: 0.75rem; text-align: left;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid #334155; color: #38bdf8;">
+                                <th style="padding: 6px;">#</th>
+                                <th style="padding: 6px;">Dirección (bc1q...)</th>
+                                <th style="padding: 6px;">Clave Pública (Hex)</th>
+                                <th style="padding: 6px;">Clave Privada (WIF)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-recepcion-body"></tbody>
+                    </table>
+                </div>
+
+                <div id="tabla-cambio-container" class="terminal-box tabla-direcciones" style="max-height: 400px; overflow-y: auto; display: none;">
+                    <table style="width:100%; border-collapse: collapse; font-size: 0.75rem; text-align: left;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid #334155; color: #f7931a;">
+                                <th style="padding: 6px;">#</th>
+                                <th style="padding: 6px;">Dirección (bc1q...)</th>
+                                <th style="padding: 6px;">Clave Pública (Hex)</th>
+                                <th style="padding: 6px;">Clave Privada (WIF)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-cambio-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// LISTA BIP39 EN INGLÉS (2048 palabras)
+const BIP39_EN = [
+"abandon","ability","able","about","above","absent","absorb","abstract","absurd","abuse","access","accident","account","accuse","achieve","acid","acoustic","acquire","across","act","action","actor","actress","actual","adapt","add","addict","address","adjust","admit","adult","advance","advice","aerobic","affair","afford","afraid","again","age","agent","agree","ahead","aim","air","airport","aisle","alarm","album","alcohol","alert","alien","all","alley","allow","almost","alone","alpha","already","also","alter","always","amateur","amazing","among","amount","amused","analyst","anchor","ancient","anger","angle","angry","animal","ankle","announce","annual","another","answer","antenna","antique","anxiety","any","apart","apology","appear","apple","approve","april","arch","arctic","area","arena","argue","arm","armed","armor","army","around","arrange","arrest","arrive","arrow","art","artefact","artist","artwork","ask","aspect","assault","asset","assist","assume","asthma","athlete","atom","attack","attend","attitude","attract","auction","audit","august","aunt","author","auto","autumn","average","avocado","avoid","awake","aware","away","awesome","awful","awkward","axis","baby","bachelor","bacon","badge","bag","balance","balcony","ball","bamboo","banana","banner","bar","barely","bargain","barrel","base","basic","basket","battle","beach","bean","beauty","because","become","beef","before","begin","behave","behind","believe","below","belt","bench","benefit","best","betray","better","between","beyond","bicycle","bid","bike","bind","biology","bird","birth","bitter","black","blade","blame","blanket","blast","bleak","bless","blind","blood","blossom","blouse","blue","blur","blush","board","boat","body","boil","bomb","bone","bonus","book","boost","border","boring","borrow","boss","bottom","bounce","box","boy","bracket","brain","brand","brass","brave","bread","breeze","brick","bridge","brief","bright","bring","brisk","broccoli","broken","bronze","broom","brother","brown","brush","bubble","buddy","budget","buffalo","build","bulb","bulk","bullet","bundle","bunker","burden","burger","burst","bus","business","busy","butter","buyer","buzz","cabbage","cabin","cable","cactus","cage","cake","call","calm","camera","camp","can","canal","cancel","candy","cannon","canoe","canvas","canyon","capable","capital","captain","car","carbon","card","cargo","carpet","carry","cart","case","cash","casino","castle","casual","cat","catalog","catch","category","cattle","caught","cause","caution","cave","ceiling","celery","cement","census","century","cereal","certain","chair","chalk","champion","change","chaos","chapter","charge","chase","chat","cheap","check","cheese","chef","cherry","chest","chicken","chief","child","chimney","choice","choose","chronic","chuckle","chunk","churn","cigar","cinnamon","circle","citizen","city","civil","claim","clap","clarify","claw","clay","clean","clerk","clever","click","client","cliff","climb","clinic","clip","clock","clog","close","cloth","cloud","clown","club","clump","cluster","clutch","coach","coast","coconut","code","coffee","coil","coin","collect","color","column","combine","come","comfort","comic","common","company","concert","conduct","confirm","congress","connect","consider","control","convince","cook","cool","copper","copy","coral","core","corn","correct","cost","cotton","couch","country","couple","course","cousin","cover","coyote","crack","cradle","craft","cram","crane","crash","crater","crawl","crazy","cream","credit","creek","crew","cricket","crime","crisp","critic","crop","cross","crouch","crowd","crucial","cruel","cruise","crumble","crunch","crush","cry","crystal","cube","culture","cup","cupboard","curious","current","curtain","curve","cushion","custom","cute","cycle","dad","damage","damp","dance","danger","daring","dash","daughter","dawn","day","deal","debate","debris","decade","december","decide","decline","decorate","decrease","deer","defense","define","defy","degree","delay","deliver","demand","demise","denial","dentist","deny","depart","depend","deposit","depth","deputy","derive","describe","desert","design","desk","despair","destroy","detail","detect","develop","device","devote","diagram","dial","diamond","diary","dice","diesel","diet","differ","digital","dignity","dilemma","dinner","dinosaur","direct","dirt","disagree","discover","disease","dish","dismiss","disorder","display","distance","divert","divide","divorce","dizzy","doctor","document","dog","doll","dolphin","domain","donate","donkey","donor","door","dose","double","dove","draft","dragon","drama","drastic","draw","dream","dress","drift","drill","drink","drip","drive","drop","drum","dry","duck","dumb","dune","during","dust","dutch","duty","dwarf","dynamic","eager","eagle","early","earn","earth","easily","east","easy","echo","ecology","economy","edge","edit","educate","effort","egg","eight","either","elbow","elder","electric","elegant","element","elephant","elevator","elite","else","embark","embody","embrace","emerge","emotion","employ","empower","empty","enable","enact","end","endless","endorse","enemy","energy","enforce","engage","engine","enhance","enjoy","enlist","enough","enrich","enroll","ensure","enter","entire","entry","envelope","episode","equal","equip","era","erase","erode","erosion","error","erupt","escape","essay","essence","estate","eternal","ethics","evidence","evil","evoke","evolve","exact","example","excess","exchange","excite","exclude","excuse","execute","exercise","exhaust","exhibit","exile","exist","exit","exotic","expand","expect","expire","explain","expose","express","extend","extra","eye","eyebrow","fabric","face","faculty","fade","faint","faith","fall","false","fame","family","famous","fan","fancy","fantasy","farm","fashion","fat","fatal","father","fatigue","fault","favorite","feature","february","federal","fee","feed","feel","female","fence","festival","fetch","fever","few","fiber","fiction","field","figure","file","film","filter","final","find","fine","finger","finish","fire","firm","first","fiscal","fish","fit","fitness","fix","flag","flame","flash","flat","flavor","flee","flight","flip","float","flock","floor","flower","fluid","flush","fly","foam","focus","fog","foil","fold","follow","food","foot","force","forest","forget","fork","fortune","forum","forward","fossil","foster","found","fox","fragile","frame","frequent","fresh","friend","fringe","frog","front","frost","frown","frozen","fruit","fuel","fun","funny","furnace","fury","future","gadget","gain","galaxy","gallery","game","gap","garage","garbage","garden","garlic","garment","gas","gasp","gate","gather","gauge","gaze","general","genius","genre","gentle","genuine","gesture","ghost","giant","gift","giggle","ginger","giraffe","girl","give","glad","glance","glare","glass","glide","glimpse","globe","gloom","glory","glove","glow","glue","goat","goddess","gold","good","goose","gorilla","gospel","gossip","govern","gown","grab","grace","grain","grant","grape","grass","gravity","great","green","grid","grief","grit","grocery","group","grow","grunt","guard","guess","guide","guilt","guitar","gun","gym","habit","hair","half","hammer","hamster","hand","happy","harbor","hard","harsh","harvest","hat","have","hawk","hazard","head","health","heart","heavy","hedgehog","height","hello","helmet","help","hen","hero","hidden","high","hill","hint","hip","hire","history","hobby","hockey","hold","hole","holiday","hollow","home","honey","hood","hope","horn","horror","horse","hospital","host","hotel","hour","hover","hub","human","huge","humble","humor","hundred","hungry","hunt","hurdle","hurry","hurt","husband","hybrid","ice","icon","idea","identify","idle","ignore","ill","illegal","illness","image","imitate","immense","immune","impact","impose","improve","impulse","inch","include","income","increase","index","indicate","indoor","industry","infant","inflict","inform","inhale","inherit","initial","inject","injury","inmate","inner","innocent","input","inquiry","insane","insect","inside","inspire","install","intact","interest","into","invest","invite","involve","iron","island","isolate","issue","item","ivory","jacket","jaguar","jar","jazz","jealous","jeans","jelly","jewel","job","join","joke","journey","joy","judge","juice","jump","jungle","junior","junk","just","kangaroo","keen","keep","ketchup","key","kick","kid","kidney","kind","kingdom","kiss","kit","kitchen","kite","kitten","kiwi","knee","knife","knock","know","lab","label","labor","ladder","lady","lake","lamp","language","laptop","large","later","latin","laugh","laundry","lava","law","lawn","lawsuit","layer","lazy","leader","leaf","learn","leave","lecture","left","leg","legal","legend","leisure","lemon","lend","length","lens","leopard","lesson","letter","level","liar","liberty","library","license","life","lift","light","like","limb","limit","link","lion","liquid","list","little","live","lizard","load","loan","lobster","local","lock","logic","lonely","long","loop","lottery","loud","lounge","love","loyal","lucky","luggage","lumber","lunar","lunch","luxury","lyrics","machine","mad","magic","magnet","maid","mail","main","major","make","mammal","man","manage","mandate","mango","mansion","manual","maple","marble","march","margin","marine","market","marriage","mask","mass","master","match","material","math","matrix","matter","maximum","maze","meadow","mean","measure","meat","mechanic","medal","media","melody","melt","member","memory","mention","menu","mercy","merge","merit","merry","mesh","message","metal","method","middle","midnight","milk","million","mimic","mind","minimum","minor","minute","miracle","mirror","misery","miss","mistake","mix","mixed","mixture","mobile","model","modify","mom","moment","monitor","monkey","monster","month","moon","moral","more","morning","mosquito","mother","motion","motor","mountain","mouse","move","movie","much","muffin","mule","multiply","muscle","museum","mushroom","music","must","mutual","myself","mystery","myth","naive","name","napkin","narrow","nasty","nation","nature","near","neck","need","negative","neglect","neither","nephew","nerve","nest","net","network","neutral","never","news","next","nice","night","noble","noise","nominee","noodle","normal","north","nose","notable","note","nothing","notice","novel","now","nuclear","number","nurse","nut","oak","obey","object","oblige","obscure","observe","obtain","obvious","occur","ocean","october","odor","off","offer","office","often","oil","okay","old","olive","olympic","omit","once","one","onion","online","only","open","opera","opinion","oppose","option","orange","orbit","orchard","order","ordinary","organ","orient","original","orphan","ostrich","other","outdoor","outer","output","outside","oval","oven","over","own","owner","oxygen","oyster","ozone","pact","paddle","page","pair","palace","palm","panda","panel","panic","panther","paper","parade","parent","park","parrot","party","pass","patch","path","patient","patrol","pattern","pause","pave","payment","peace","peanut","pear","peasant","pelican","pen","penalty","pencil","people","pepper","perfect","permit","person","pet","phone","photo","phrase","physical","piano","picnic","picture","piece","pig","pigeon","pill","pilot","pink","pioneer","pipe","pistol","pitch","pizza","place","planet","plastic","plate","play","please","pledge","pluck","plug","plunge","poem","poet","point","polar","pole","police","pond","pony","pool","popular","portion","position","possible","post","potato","pottery","poverty","powder","power","practice","praise","predict","prefer","prepare","present","pretty","prevent","price","pride","primary","print","priority","prison","private","prize","problem","process","produce","profit","program","project","promote","proof","property","prosper","protect","proud","provide","public","pudding","pull","pulp","pulse","pumpkin","punch","pupil","puppy","purchase","purity","purpose","purse","push","put","puzzle","pyramid","quality","quantum","quarter","question","quick","quit","quiz","quote","rabbit","raccoon","race","rack","radar","radio","rail","rain","raise","rally","ramp","ranch","random","range","rapid","rare","rate","rather","raven","raw","razor","ready","real","reason","rebel","rebuild","recall","receive","recipe","record","recycle","reduce","reflect","reform","refuse","region","regret","regular","reject","relax","release","relief","rely","remain","remember","remind","remove","render","renew","rent","reopen","repair","repeat","replace","report","require","rescue","resemble","resist","resource","response","result","retire","retreat","return","reunion","reveal","review","reward","rhythm","rib","ribbon","rice","rich","ride","ridge","rifle","right","rigid","ring","riot","ripple","risk","ritual","rival","river","road","roast","robot","robust","rocket","romance","roof","rookie","room","rose","rotate","rough","round","route","royal","rubber","rude","rug","rule","run","runway","rural","sad","saddle","sadness","safe","sail","salad","salmon","salon","salt","salute","same","sample","sand","satisfy","satoshi","sauce","sausage","save","say","scale","scan","scare","scatter","scene","scheme","school","science","scissors","scorpion","scout","scrap","screen","script","scrub","sea","search","season","seat","second","secret","section","security","seed","seek","segment","select","sell","seminar","senior","sense","sentence","series","service","session","settle","setup","seven","shadow","shaft","shallow","share","shed","shell","sheriff","shield","shift","shine","ship","shiver","shock","shoe","shoot","shop","short","shoulder","shove","shrimp","shrug","shuffle","shy","sibling","sick","side","siege","sight","sign","silent","silk","silly","silver","similar","simple","since","sing","siren","sister","situate","six","size","skate","sketch","ski","skill","skin","skirt","skull","slab","slam","sleep","slender","slice","slide","slight","slim","slogan","slot","slow","slush","small","smart","smile","smoke","smooth","snack","snake","snap","sniff","snow","soap","soccer","social","sock","soda","soft","solar","soldier","solid","solution","solve","someone","song","soon","sorry","sort","soul","sound","soup","source","south","space","spare","spatial","spawn","speak","special","speed","spell","spend","sphere","spice","spider","spike","spin","spirit","split","spoil","sponsor","spoon","sport","spot","spray","spread","spring","spy","square","squeeze","squirrel","stable","stadium","staff","stage","stairs","stamp","stand","start","state","stay","steak","steel","stem","step","stereo","stick","still","sting","stock","stomach","stone","stool","story","stove","strategy","street","strike","strong","struggle","student","stuff","stumble","style","subject","submit","subway","success","such","sudden","suffer","sugar","suggest","suit","summer","sun","sunny","sunset","super","supply","supreme","sure","surface","surge","surprise","surround","survey","suspect","sustain","swallow","swamp","swap","swarm","swear","sweet","swift","swim","swing","switch","sword","symbol","symptom","syrup","system","table","tackle","tag","tail","talent","talk","tank","tape","target","task","taste","tattoo","taxi","teach","team","tell","ten","tenant","tennis","tent","term","test","text","thank","that","theme","then","theory","there","they","thing","this","thought","three","thrive","throw","thumb","thunder","ticket","tide","tiger","tilt","timber","time","tiny","tip","tired","tissue","title","toast","tobacco","today","toddler","toe","together","toilet","token","tomato","tomorrow","tone","tongue","tonight","tool","tooth","top","topic","topple","torch","tornado","tortoise","toss","total","tourist","toward","tower","town","toy","track","trade","traffic","tragic","train","transfer","trap","trash","travel","tray","treat","tree","trend","trial","tribe","trick","trigger","trim","trip","trophy","trouble","truck","true","truly","trumpet","trust","truth","try","tube","tuition","tumble","tuna","tunnel","turkey","turn","turtle","twelve","twenty","twice","twin","twist","two","type","typical","ugly","umbrella","unable","unaware","uncle","uncover","under","undo","unfair","unfold","unhappy","uniform","unique","unit","universe","unknown","unlock","until","unusual","unveil","update","upgrade","uphold","upon","upper","upset","urban","urge","usage","use","used","useful","useless","usual","utility","vacant","vacuum","vague","valid","valley","valve","van","vanish","vapor","various","vast","vault","vehicle","velvet","vendor","venture","venue","verb","verify","version","very","vessel","veteran","viable","vibrant","vicious","victory","video","view","village","vintage","violin","virtual","virus","visa","visit","visual","vital","vivid","vocal","voice","void","volcano","volume","vote","voyage","wage","wagon","wait","walk","wall","walnut","want","warfare","warm","warrior","wash","wasp","waste","water","wave","way","wealth","weapon","wear","weasel","weather","web","wedding","weekend","weird","welcome","west","wet","whale","what","wheat","wheel","when","where","whip","whisper","wide","width","wife","wild","will","win","window","wine","wing","wink","winner","winter","wire","wisdom","wise","wish","witness","wolf","woman","wonder","wood","wool","word","work","world","worry","worth","wrap","wreck","wrestle","wrist","write","wrong","yard","year","yellow","you","young","youth","zebra","zero","zone","zoo"
+];
+
+// Variables globales
+let fraseGenerada = "";
+let seedGenerada = null;
+let zprvGenerada = "";
+let zpubGenerada = "";
+
+function generarFraseCompleta() {
+    const bytes = new Uint8Array(32);
+    window.crypto.getRandomValues(bytes);
+    
+    const entropiaBits = Array.from(bytes).map(b => b.toString(2).padStart(8, '0')).join('');
+    const entropiaHex = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+    
+    document.getElementById('wp-entropia').innerHTML = 
+        `<span class="bits-label">Binario: </span><span style="color:#38bdf8;">${entropiaBits}</span><br>` +
+        `<span class="bits-label">HEX: </span><span class="hex-entropy">${entropiaHex}</span>`;
+    
+    const entropiaBytes = hexToBytes(entropiaHex.toLowerCase());
+    
+    window.crypto.subtle.digest('SHA-256', entropiaBytes).then(shaBuffer => {
+        const shaBytes = new Uint8Array(shaBuffer);
+        const shaHex = bytesToHex(shaBytes).toUpperCase();
+        
+        // Obtener los primeros 8 bits del hash SHA-256
+        const checksumBits = shaBytes[0].toString(2).padStart(8, '0');
+        
+        document.getElementById('wp-checksum').innerHTML = 
+            `SHA-256: <span style="color:#94a3b8;">${shaHex}</span><br>` +
+            `Checksum (8 bits): <span style="color:#a855f7; font-weight:bold;">${checksumBits}</span>`;
+        
+        const entropiaConChecksum = entropiaBits + checksumBits;
+        const grupos = [];
+        for (let i = 0; i < 24; i++) {
+            const start = i * 11;
+            const grupo = entropiaConChecksum.substring(start, start + 11);
+            grupos.push(parseInt(grupo, 2));
+        }
+        
+        const palabras = grupos.map(idx => BIP39_EN[idx] || "???");
+        fraseGenerada = palabras.join(' ');
+        
+        let htmlGrid = '<div class="palabra-grid">';
+        palabras.forEach((word, i) => {
+            htmlGrid += `<div class="palabra-item">
+                <span class="idx">#${String(i+1).padStart(2,'0')}</span>
+                <span class="word">${word}</span>
+                <span class="bip-index">Índice ${grupos[i]}</span>
+            </div>`;
+        });
+        htmlGrid += '</div>';
+        document.getElementById('wp-palabras').innerHTML = htmlGrid;
+        
+        const container = document.getElementById('frase-final-container');
+        container.style.display = 'block';
+        document.getElementById('frase-completa').textContent = fraseGenerada;
+        
+        // Reset de vistas subsecuentes
+        seedGenerada = null;
+        zprvGenerada = "";
+        zpubGenerada = "";
+        document.getElementById('seed-section-inline').style.display = 'none';
+        document.getElementById('clave-maestra-section').style.display = 'none';
+        document.getElementById('direcciones-section').style.display = 'none';
+    });
+}
+
+async function derivarSeedDesdeFrase() {
+    if (!fraseGenerada) return alert('⚠️ Primero genera la frase semilla.');
+    
+    const passphrase = document.getElementById('passphrase-input').value || '';
+    const btn = document.getElementById('btn-derivar-seed');
+    const loading = document.getElementById('seed-loading-header');
+    
+    btn.disabled = true;
+    loading.style.display = 'inline';
+    
+    try {
+        const mnemonicNormalizado = fraseGenerada.toLowerCase().normalize('NFKD');
+        const salt = 'mnemonic' + passphrase;
+        const encoder = new TextEncoder();
+        
+        const keyMaterial = await window.crypto.subtle.importKey(
+            'raw', encoder.encode(mnemonicNormalizado), { name: 'PBKDF2' }, false, ['deriveBits']
+        );
+        
+        const seedBuffer = await window.crypto.subtle.deriveBits(
+            { name: 'PBKDF2', salt: encoder.encode(salt), iterations: 2048, hash: 'SHA-512' },
+            keyMaterial, 512
+        );
+        
+        seedGenerada = new Uint8Array(seedBuffer);
+        const hexSeed = bytesToHex(seedGenerada);
+        
+        document.getElementById('seed-hex-display').textContent = hexSeed;
+        document.getElementById('seed-info').textContent = `Passphrase: ${passphrase || '(vacía)'}`;
+        document.getElementById('seed-section-inline').style.display = 'block';
+    } catch (e) {
+        alert('Error al derivar la seed.');
+    } finally {
+        btn.disabled = false;
+        loading.style.display = 'none';
+    }
+}
+
+async function derivarClaveMaestra() {
+    if (!seedGenerada) return alert('⚠️ Deriva la Seed antes de continuar.');
+    
+    const btn = document.getElementById('btn-derivar-clave');
+    const loading = document.getElementById('clave-loading-header');
+    btn.disabled = true;
+    loading.style.display = 'inline';
+    
+    try {
+        const encoder = new TextEncoder();
+        const keyBytes = encoder.encode("Bitcoin seed");
+        
+        const cryptoKey = await window.crypto.subtle.importKey(
+            'raw', keyBytes, { name: 'HMAC', hash: 'SHA-512' }, false, ['sign']
+        );
+        
+        const hmacResult = await window.crypto.subtle.sign('HMAC', cryptoKey, seedGenerada);
+        const hmacBytes = new Uint8Array(hmacResult);
+        
+        let currentPrivKey = hmacBytes.slice(0, 32);
+        let currentChainCode = hmacBytes.slice(32, 64);
+        
+        const path = [84, 0, 0];
+        let parentFingerprint = 0;
+        
+        for (const index of path) {
+            parentFingerprint = await getParentFingerprint(currentPrivKey);
+            const derived = await derivarHijoHardened(currentPrivKey, currentChainCode, index);
+            currentPrivKey = derived.privKey;
+            currentChainCode = derived.chainCode;
+        }
+        
+        document.getElementById('xprv-private-key').textContent = bytesToHex(currentPrivKey);
+        document.getElementById('xprv-chain-code').textContent = bytesToHex(currentChainCode);
+
+        const zprvData = buildExtendedKeyWithMetadata(currentPrivKey, currentChainCode, 0x04B2430C, 3, parentFingerprint, 0x80000000, false);
+        zprvGenerada = await addChecksumAndBase58Async(zprvData);
+        document.getElementById('zprv-result').textContent = zprvGenerada;
+        
+        const publicKey = derivePublicKey(currentPrivKey);
+        const zpubData = buildExtendedKeyWithMetadata(publicKey, currentChainCode, 0x04B24746, 3, parentFingerprint, 0x80000000, true);
+        zpubGenerada = await addChecksumAndBase58Async(zpubData);
+        document.getElementById('zpub-result').textContent = zpubGenerada;
+        
+        document.getElementById('clave-maestra-section').style.display = 'block';
+    } catch (e) {
+        alert('Error: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        loading.style.display = 'none';
+    }
+}
+
+async function generar200Direcciones() {
+    if (!zprvGenerada) return alert('⚠️ Debes derivar la Clave Maestra primero.');
+
+    const btnHeader = document.getElementById('btn-derivar-direcciones-header');
+    const btnPaso = document.getElementById('btn-derivar-direcciones-paso');
+    const loadingHeader = document.getElementById('dir-loading-header');
+    const loadingPaso = document.getElementById('dir-loading');
+
+    btnHeader.disabled = true;
+    btnPaso.disabled = true;
+    loadingHeader.style.display = 'inline';
+    loadingPaso.style.display = 'inline';
+
+    await new Promise(r => setTimeout(r, 20));
+
+    try {
+        const accountPrivKey = hexToBytes(document.getElementById('xprv-private-key').textContent);
+        const accountChainCode = hexToBytes(document.getElementById('xprv-chain-code').textContent);
+
+        const branchRecepcion = await derivarHijoNormal(accountPrivKey, accountChainCode, 0);
+        const branchCambio = await derivarHijoNormal(accountPrivKey, accountChainCode, 1);
+
+        const fillTable = async (bodyId, branch) => {
+            const body = document.getElementById(bodyId);
+            let rowsHtml = '';
+
+            for (let i = 0; i < 100; i++) {
+                const leaf = await derivarHijoNormal(branch.privKey, branch.chainCode, i);
+                const pubKey = derivePublicKey(leaf.privKey);
+                const address = await pubKeyToBech32(pubKey);
+                const wif = await privKeyToWIF(leaf.privKey);
+
+                rowsHtml += `<tr style="border-bottom: 1px solid #1e293b;">
+                    <td style="padding: 6px; color:#64748b;">${i}</td>
+                    <td style="padding: 6px; font-weight:bold;">${address}</td>
+                    <td style="padding: 6px; color:#e2e8f0;">${bytesToHex(pubKey)}</td>
+                    <td style="padding: 6px; color:#a855f7;">${wif}</td>
+                </tr>`;
+
+                if (i % 25 === 0) {
+                    await new Promise(resolve => setTimeout(resolve, 0));
+                }
+            }
+
+            body.innerHTML = rowsHtml;
+        };
+
+        await fillTable('tabla-recepcion-body', branchRecepcion);
+        await fillTable('tabla-cambio-body', branchCambio);
+
+        document.getElementById('direcciones-section').style.display = 'block';
+    } catch (err) {
+        alert("Error al generar direcciones: " + err.message);
+    } finally {
+        btnHeader.disabled = false;
+        btnPaso.disabled = false;
+        loadingHeader.style.display = 'none';
+        loadingPaso.style.display = 'none';
+    }
+}
+
+async function getParentFingerprint(privKey) {
+    const pubKey = derivePublicKey(privKey);
+    const sha = await window.crypto.subtle.digest('SHA-256', pubKey);
+    const hash = ripemd160(new Uint8Array(sha));
+    return ((hash[0] << 24) | (hash[1] << 16) | (hash[2] << 8) | hash[3]) >>> 0;
+}
+
+// FUNCIONES AUXILIARES CRIPTOGRÁFICAS
+async function derivarHijoHardened(parentPrivKey, parentChainCode, index) {
+    const data = new Uint8Array(37);
+    data[0] = 0x00;
+    data.set(parentPrivKey, 1);
+    new DataView(data.buffer).setUint32(33, index + 0x80000000, false);
+    
+    const cryptoKey = await window.crypto.subtle.importKey('raw', parentChainCode, { name: 'HMAC', hash: 'SHA-512' }, false, ['sign']);
+    const I = new Uint8Array(await window.crypto.subtle.sign('HMAC', cryptoKey, data));
+    
+    const childBigInt = (bytesToBigInt(I.slice(0, 32)) + bytesToBigInt(parentPrivKey)) % SECP256K1.n;
+    if (childBigInt === 0n) throw new Error("Derivación inválida (clave cero)");
+    return { privKey: bigIntToBytes(childBigInt, 32), chainCode: I.slice(32, 64) };
+}
+
+async function derivarHijoNormal(parentPrivKey, parentChainCode, index) {
+    const parentPubKey = derivePublicKey(parentPrivKey);
+    const data = new Uint8Array(37);
+    data.set(parentPubKey, 0);
+    new DataView(data.buffer).setUint32(33, index, false);
+
+    const cryptoKey = await window.crypto.subtle.importKey('raw', parentChainCode, { name: 'HMAC', hash: 'SHA-512' }, false, ['sign']);
+    const I = new Uint8Array(await window.crypto.subtle.sign('HMAC', cryptoKey, data));
+
+    const childBigInt = (bytesToBigInt(I.slice(0, 32)) + bytesToBigInt(parentPrivKey)) % SECP256K1.n;
+    if (childBigInt === 0n) throw new Error("Derivación inválida (clave cero)");
+    return { privKey: bigIntToBytes(childBigInt, 32), chainCode: I.slice(32, 64) };
+}
+
+function buildExtendedKeyWithMetadata(keyData, chainCode, version, depth, parentFingerprint, childNumber, isPublic) {
+    const rawData = new Uint8Array(78);
+    const view = new DataView(rawData.buffer);
+    view.setUint32(0, version, false);
+    rawData[4] = depth;
+    view.setUint32(5, parentFingerprint, false);
+    view.setUint32(9, childNumber, false);
+    rawData.set(chainCode, 13);
+    if (!isPublic) {
+        rawData[45] = 0x00;
+        rawData.set(keyData, 46);
+    } else {
+        rawData.set(keyData, 45);
+    }
+    return rawData;
+}
+
+async function privKeyToWIF(privKey) {
+    const wifData = new Uint8Array(34);
+    wifData[0] = 0x80;
+    wifData.set(privKey, 1);
+    wifData[33] = 0x01;
+    return await addChecksumAndBase58Async(wifData);
+}
+
+async function pubKeyToBech32(pubKey) {
+    const pubKeyHash = ripemd160(new Uint8Array(await window.crypto.subtle.digest('SHA-256', pubKey)));
+    const words = convertBits(pubKeyHash, 8, 5, true);
+    const fullWords = new Uint8Array(words.length + 1);
+    fullWords[0] = 0;
+    fullWords.set(words, 1);
+    return encodeBech32('bc', fullWords);
+}
+
+// UTILIDADES Y BECH32/BASE58
+function hexToBytes(hex) {
+    const bytes = new Uint8Array(hex.length / 2);
+    for (let i = 0; i < hex.length; i += 2) bytes[i / 2] = parseInt(hex.substr(i, 2), 16);
+    return bytes;
+}
+
+function bytesToHex(buffer) {
+    return Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function addChecksumAndBase58Async(data) {
+    const hash1 = await window.crypto.subtle.digest('SHA-256', data);
+    const hash2 = await window.crypto.subtle.digest('SHA-256', hash1);
+    const checksum = new Uint8Array(hash2).slice(0, 4);
+    
+    const finalData = new Uint8Array(data.length + 4);
+    finalData.set(data, 0);
+    finalData.set(checksum, data.length);
+    return encodeBase58(finalData);
+}
+
+function encodeBase58(bytes) {
+    const ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+    let zeros = 0;
+    while (zeros < bytes.length && bytes[zeros] === 0) zeros++;
+    let number = BigInt('0x' + bytesToHex(bytes));
+    let result = '';
+    while (number > 0) {
+        result = ALPHABET[Number(number % 58n)] + result;
+        number /= 58n;
+    }
+    return '1'.repeat(zeros) + result;
+}
+
+function convertBits(data, frombits, tobits, pad) {
+    let acc = 0, bits = 0;
+    const ret = [], maxv = (1 << tobits) - 1;
+    for (let p = 0; p < data.length; p++) {
+        acc = (acc << frombits) | data[p];
+        bits += frombits;
+        while (bits >= tobits) {
+            bits -= tobits;
+            ret.push((acc >> bits) & maxv);
+        }
+    }
+    if (pad && bits > 0) ret.push((acc << (tobits - bits)) & maxv);
+    return ret;
+}
+
+function encodeBech32(hrp, data) {
+    const CHARSET = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l';
+    function polymod(values) {
+        let chk = 1;
+        for (let p = 0; p < values.length; ++p) {
+            const top = chk >> 25;
+            chk = ((chk & 0x1ffffff) << 5) ^ values[p];
+            for (let i = 0; i < 5; ++i) if ((top >> i) & 1) chk ^= [0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3][i];
+        }
+        return chk;
+    }
+    function hrpExpand(hrp) {
+        const ret = [];
+        for (let i = 0; i < hrp.length; ++i) ret.push(hrp.charCodeAt(i) >> 5);
+        ret.push(0);
+        for (let i = 0; i < hrp.length; ++i) ret.push(hrp.charCodeAt(i) & 31);
+        return ret;
+    }
+    const combined = hrpExpand(hrp).concat(Array.from(data)).concat([0, 0, 0, 0, 0, 0]);
+    const mod = polymod(combined) ^ 1;
+    const checksum = [];
+    for (let p = 0; p < 6; ++p) checksum.push((mod >> (5 * (5 - p))) & 31);
+    return hrp + '1' + Array.from(data).concat(checksum).map(d => CHARSET[d]).join('');
+}
+
+// CURVA ELÍPTICA SECP256K1 & RIPEMD160
+const SECP256K1 = {
+    p: 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2Fn,
+    n: 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141n,
+    Gx: 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798n,
+    Gy: 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8n,
+};
+
+function derivePublicKey(privateKey) {
+    const k = bytesToBigInt(privateKey);
+    if (k <= 0n || k >= SECP256K1.n) {
+        throw new Error("Clave privada fuera de rango");
+    }
+
+    const P = scalarMult(k, [SECP256K1.Gx, SECP256K1.Gy]);
+    if (!P) throw new Error("Punto al infinito");
+
+    const pubKey = new Uint8Array(33);
+    pubKey[0] = (P[1] & 1n) === 0n ? 0x02 : 0x03;
+    pubKey.set(bigIntToBytes(P[0], 32), 1);
+    return pubKey;
+}
+
+function scalarMult(k, point) {
+    let result = null;
+    let addend = point;
+    let scalar = k % SECP256K1.n;
+
+    if (scalar === 0n) return null;
+
+    while (scalar > 0n) {
+        if (scalar & 1n) result = pointAdd(result, addend);
+        addend = pointAdd(addend, addend);
+        scalar >>= 1n;
+    }
+    return result;
+}
+
+function pointAdd(p1, p2) {
+    if (!p1) return p2;
+    if (!p2) return p1;
+
+    const [x1, y1] = p1, [x2, y2] = p2, p = SECP256K1.p;
+
+    if (x1 === x2 && (y1 !== y2 || y1 === 0n)) {
+        return null;
+    }
+
+    let slope;
+    if (x1 === x2 && y1 === y2) {
+        slope = (3n * x1 * x1 * modInverse(2n * y1, p)) % p;
+    } else {
+        const num = (y2 - y1 + p) % p;
+        const den = (x2 - x1 + p) % p;
+        slope = (num * modInverse(den, p)) % p;
+    }
+
+    const x3 = (slope * slope - x1 - x2) % p;
+    const y3 = (slope * (x1 - x3) - y1) % p;
+
+    return [(x3 + p) % p, (y3 + p) % p];
+}
+
+function modInverse(a, m) {
+    let [old_r, r] = [(a % m + m) % m, m];
+    let [old_s, s] = [1n, 0n];
+
+    if (old_r === 0n) {
+        throw new Error("División por cero en modInverse");
+    }
+
+    while (r !== 0n) {
+        const q = old_r / r;
+        [old_r, r] = [r, old_r - q * r];
+        [old_s, s] = [s, old_s - q * s];
+    }
+    return (old_s % m + m) % m;
+}
+
+function bytesToBigInt(bytes) {
+    return BigInt('0x' + bytesToHex(bytes));
+}
+
+function bigIntToBytes(value, length) {
+    const hex = value.toString(16).padStart(length * 2, '0');
+    return hexToBytes(hex);
+}
+
+function ripemd160(message) {
+    var Z = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,7,4,13,1,10,6,15,3,12,0,9,5,2,14,11,8,3,10,14,4,9,15,8,1,2,7,0,6,13,11,5,12,1,9,11,10,0,8,12,4,13,3,7,15,14,5,6,2,4,0,5,9,7,12,2,10,14,1,3,8,11,6,15,13];
+    var Zprime = [5,14,7,0,9,2,11,4,13,6,15,8,1,10,3,12,6,11,3,7,0,13,5,10,14,15,8,12,4,9,1,2,15,5,1,3,7,14,6,9,11,8,12,2,10,0,4,13,8,6,4,1,3,11,15,0,5,12,2,13,9,7,10,14,12,15,10,4,1,5,8,7,6,2,13,14,0,3,9,11];
+    var S = [11,14,15,12,5,8,7,9,11,13,14,15,6,7,9,8,7,6,8,13,11,9,7,15,7,12,15,9,11,7,13,12,11,13,6,7,14,9,13,15,14,8,13,6,5,12,7,5,11,12,14,15,14,15,9,8,9,14,5,6,8,6,5,12,9,15,5,11,6,8,13,12,5,12,13,14,11,8,5,6];
+    var Sprime = [8,9,9,11,13,15,15,5,7,7,8,11,14,14,12,6,9,13,15,7,12,8,9,11,7,7,12,7,6,15,13,11,9,7,15,11,8,6,6,14,12,13,5,14,13,13,7,5,15,5,8,11,14,14,6,14,6,9,12,9,12,5,15,8,8,5,12,9,12,5,14,6,8,13,6,5,15,13,11,11];
+    function f(j, x, y, z) {
+        if (j < 16) return x ^ y ^ z;
+        if (j < 32) return (x & y) | (~x & z);
+        if (j < 48) return (x | ~y) ^ z;
+        if (j < 64) return (x & z) | (y & ~z);
+        return x ^ (y | ~z);
+    }
+    function rol(x, n) { return (x << n) | (x >>> (32 - n)); }
+    var n = message.length, wordCount = ((n + 8) >> 6) + 1, totalWords = wordCount * 16, X = new Int32Array(totalWords);
+    for (var i = 0; i < n; i++) X[i >> 2] |= message[i] << ((i % 4) * 8);
+    X[n >> 2] |= 0x80 << ((n % 4) * 8);
+    X[totalWords - 2] = n * 8;
+    var h0 = 0x67452301, h1 = 0xefcdab89, h2 = 0x98badcfe, h3 = 0x10325476, h4 = 0xc3d2e1f0;
+    for (var i = 0; i < totalWords; i += 16) {
+        var A = h0, B = h1, C = h2, D = h3, E = h4, Aprime = h0, Bprime = h1, Cprime = h2, Dprime = h3, Eprime = h4;
+        for (var j = 0; j < 80; j++) {
+            var K = (j<16)?0:(j<32)?0x5a827999:(j<48)?0x6ed9eba1:(j<64)?0x8f1bbcdc:0xa953fd4e;
+            var T = (A + f(j, B, C, D) + X[i + Z[j]] + K) | 0;
+            T = (rol(T, S[j]) + E) | 0;
+            A = E; E = D; D = rol(C, 10); C = B; B = T;
+            var Kprime = (j<16)?0x50a28be6:(j<32)?0x5c4dd124:(j<48)?0x6d703ef3:(j<64)?0x7a6d76e9:0;
+            var Tprime = (Aprime + f(79 - j, Bprime, Cprime, Dprime) + X[i + Zprime[j]] + Kprime) | 0;
+            Tprime = (rol(Tprime, Sprime[j]) + Eprime) | 0;
+            Aprime = Eprime; Eprime = Dprime; Dprime = rol(Cprime, 10); Cprime = Bprime; Bprime = Tprime;
+        }
+        var T = (h1 + C + Dprime) | 0;
+        h1 = (h2 + D + Eprime) | 0; h2 = (h3 + E + Aprime) | 0; h3 = (h4 + A + Bprime) | 0; h4 = (h0 + B + Cprime) | 0; h0 = T;
+    }
+    var result = new Uint8Array(20), h = [h0, h1, h2, h3, h4];
+    for (var i = 0; i < 5; i++) {
+        result[i * 4] = h[i] & 0xff; result[i * 4 + 1] = (h[i] >>> 8) & 0xff;
+        result[i * 4 + 2] = (h[i] >>> 16) & 0xff; result[i * 4 + 3] = (h[i] >>> 24) & 0xff;
+    }
+    return result;
+}
+
+// FUNCIONES DE COPIADO Y UI
+function copiarFrase() {
+    navigator.clipboard.writeText(fraseGenerada).then(() => alert('¡Frase copiada!'));
+}
+function copiarSeed() {
+    navigator.clipboard.writeText(bytesToHex(seedGenerada)).then(() => alert('¡Seed copiada!'));
+}
+function copiarTexto(varName, label) {
+    const val = varName === 'zprvGenerada' ? zprvGenerada : zpubGenerada;
+    navigator.clipboard.writeText(val).then(() => alert('¡' + label.toUpperCase() + ' copiado!'));
+}
+function mostrarTab(tipo) {
+    document.getElementById('tabla-recepcion-container').style.display = tipo === 'recepcion' ? 'block' : 'none';
+    document.getElementById('tabla-cambio-container').style.display = tipo === 'cambio' ? 'block' : 'none';
+    document.getElementById('tab-rec-btn').style.background = tipo === 'recepcion' ? '#38bdf8' : '#e2e8f0';
+    document.getElementById('tab-cam-btn').style.background = tipo === 'cambio' ? '#f7931a' : '#e2e8f0';
+}
+</script>
+
+<footer style="text-align: center; margin-top: 50px; font-family: sans-serif; color: #666; font-size: 14px;">
+    <p>© 2026 <strong>clavebit.com</strong> | Licencia MIT</p>
+</footer>
+
+</body>
+</html>
